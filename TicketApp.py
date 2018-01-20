@@ -9,16 +9,17 @@ import threading
 class Widget():
     def __init__(self):
 
-        self.flag = True
-        self.t=None
-        self.mutex=threading.Lock()
+    	#初始化窗口
         self.root = Tk()
         self.root.title('12306火车票查询系统')
         self.root.resizable(False,False)
         #self.root.geometry("600x300+200+200")
+
+        #添加两个Frame组件
         self.frame_bottom=Frame(width=800,height=100)
         self.frame_top = Frame(width=800,height=50)
-
+        
+        #将以下各个控件分别绑定到这俩个Frame中
         # 上部Frame,由左到右，依次添加控件
         # 显示当前日期,
         #Label : row=0, column = 0/1
@@ -36,10 +37,9 @@ class Widget():
         self.time_entry = Entry(self.frame_top,textvariable=self.time_string,width=10)
         self.time_label.grid(row=1,column=0)
         self.time_entry.grid(row=1,column=1)
-
         # 调用set_date方法，显示当前日期，及初始化出行日期
         self.set_date()
-        
+        #=======================================================================
         # 添加始发站(标签及输入框)
         #位置:第1行的3、4两列
         self.start_string = StringVar()
@@ -57,8 +57,8 @@ class Widget():
         self.end_entry = Entry(self.frame_top,textvariable=self.end_string,width=10)
         self.end_label.grid(row=1,column=2)
         self.end_entry.grid(row=1,column=3)
-
-        # 命令按钮
+        #========================================================================
+        # 命令按钮，包括查询、删除、退出按钮等等
         #位置:第3行的5、6列
         self.check_button = Button(self.frame_top,text='查询',width=10,command=self.check_ticket)
         self.check_button_ = Button(self.frame_top,text='自动查询',width=10,command=self.auto_check_ticket)
@@ -76,21 +76,23 @@ class Widget():
         self.display  = Label(self.frame_top,text='',width=8)
         self.display.grid(row=1,column=7,padx=0,pady=5)
 
-
-        #登录窗口
+        #========================================================================
+        #登录窗口,包括标签及输入框及登录按钮
         self.login_bt = Button(self.frame_top,text='登录',width=6)
         self.name = Label(self.frame_top,text='用户名:',width=8)
         self.pwd = Label(self.frame_top,text='密码:',width=8)
         self.name_entry = Entry(self.frame_top,width=12)
         self.pwd_entry = Entry(self.frame_top,width=12)
+        #部件整合到窗口
         self.login_bt.grid(row=0,column=7)
         self.name.grid(row=0,column=8)
         self.name_entry.grid(row=0,column=9)
         self.pwd.grid(row=1,column=8)
         self.pwd_entry.grid(row=1,column=9)
-        # 下部Frame部件
+
+        #======================================================================================================#
+        # 下部Frame部件,在Frame框架中添加Treeview控件，并添加表格头部信息
         cols = ('a','b','c','d','e','f','g','h','i','j','k','m','n','p','q')
-        
         self.treeview = ttk.Treeview(self.frame_bottom,show='headings',height=18,columns=cols,selectmode='browse')
         self.scroll = ttk.Scrollbar(self.frame_bottom,orient='vertical',command=self.treeview.yview)
         self.treeview.configure(yscrollcommand=self.scroll.set)
@@ -128,39 +130,37 @@ class Widget():
         self.scroll.grid(row=0,column=1,sticky=NSEW)
         #self.scroll.pack(side=RIGHT,fill=Y)
 
+        self.t=None
+        self.mutex=threading.Lock()
 
-
-
-
-
-
-
-    def get_train_times(self):
-         num = len(self.treeview.get_children())
-         self.display['text']=str(num)+' 班列车'
-       
+        #===================================================================================#
+        #获取当前日期并显示
     def set_date(self):
         date =time.strftime('%Y-%m-%d',time.localtime(time.time()))
         self.date_label['text']=date
         self.time_string.set(date)
-
+        
+        # 交换出发站和终点站
     def change_station(self):
         temp1 = self.start_entry.get()
         temp2 = self.end_entry.get()
         self.start_string.set(temp2)
         self.end_string.set(temp1)
-    
+
+       	#获取当天可乘车次总数
+    def get_train_times(self):
+         num = len(self.treeview.get_children())
+         self.display['text']=str(num)+' 班列车'
+       
+
+   
         # 获取出行日期
     def get_date(self):
         return self.time_entry.get()
 
-        #获取用户输入的站点
-    def get_station_name(self):
-        st1,st2 =  self.start_entry.get(),self.end_entry.get()
-        return st1,st2
 
-
-        #设置站点代码
+    #=============================================================#
+        #设置站点字典{'name':'code'}
     def station_dict(self):
         station_dict = {
                     "武汉":'WHN',
@@ -176,7 +176,14 @@ class Widget():
                     }
         return station_dict
 
-        # 获取站点代码
+    #=============================================
+        #获取用户输入的站点
+    def get_station_name(self):
+        st1,st2 =  self.start_entry.get(),self.end_entry.get()
+        return st1,st2
+
+
+        # 根据输入的名称，获取站点代码
     def get_station_code(self):
         s_dict = self.station_dict()
         sname, ename = self.get_station_name()            
@@ -184,29 +191,35 @@ class Widget():
         e_code = s_dict[ename]
         return s_code,e_code  #返回始发站的代码
 
-        #根据用户输入站点和日期修正url
+
+        #根据站点代码和日期完整化url
     def fix_url(self):
         date = self.get_date()
         s_code ,e_code = self.get_station_code()
         url =url = 'https://kyfw.12306.cn/otn/leftTicket/queryZ?leftTicketDTO.train_date='+date+'&leftTicketDTO.from_station='+s_code+'&leftTicketDTO.to_station='+e_code+'&purpose_codes=ADULT'
         get_header = {"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0"}
-        return url,get_header
+        return url,get_header   #返回正确的url和请求header
 
+        # 对目标url发起requests请求链接
     def get_info(self):
         url, header = self.fix_url()
         addr = []
         info = []
         try:
-            response = requests.get(url,headers=header,timeout=20)
+            response = requests.get(url,headers=header,timeout=5)
+            #response.encoding = response.apparent_encoding
+           
             response = json.loads(response.text)
+
         except Exception as e:
             print('timeout')
             print(e)
         else:
             addr = response['data']['map']
             info = response['data']['result']
-        return addr,info
+        return addr,info   #返回站点名称及所有车次信息
 
+        #将站点名称及车次信息存放入Treeview表格中，展示给用户
     def train_info(self):
         addr ,info = self.get_info()
         #print(info)
@@ -234,11 +247,12 @@ class Widget():
                 self.treeview.insert('','end',values=temp)
         #print(train_num)
 
+        # 删除表格中的车次信息
     def clear_conent(self):
-
         for _ in map(self.treeview.delete,self.treeview.get_children("")):
             pass
 
+        # 点击按钮实现信息请求，完成主要信息获取任务
     def check_ticket(self):
         a,b = self.get_station_name()
         if a=='' or b=='':
@@ -247,6 +261,7 @@ class Widget():
         self.train_info()
         self.get_train_times()
 
+        # 启动线程，自动更新车次信息
     def auto_check_ticket(self):
         for i in range(10):
             self.t=threading.Thread(target=self.check_thread)
@@ -254,10 +269,12 @@ class Widget():
             self.t.start()
             
         
-
+        #线程主任务
     def check_thread(self):
         self.mutex.acquire(10)
         a,b = self.get_station_name()
+
+        # 防止内容为空时，在错误情况下，执行线程，初始化站点信息
         if a=='' or b=='':
             a='武汉'
             b='合肥'
