@@ -155,7 +155,7 @@ class Widget():
         return self.time_entry.get()
 
         #获取用户输入的站点
-    def get_station(self):
+    def get_station_name(self):
         st1,st2 =  self.start_entry.get(),self.end_entry.get()
         return st1,st2
 
@@ -179,7 +179,7 @@ class Widget():
         # 获取站点代码
     def get_station_code(self):
         s_dict = self.station_dict()
-        sname, ename = self.get_station()            
+        sname, ename = self.get_station_name()            
         s_code = s_dict[sname]
         e_code = s_dict[ename]
         return s_code,e_code  #返回始发站的代码
@@ -240,7 +240,7 @@ class Widget():
             pass
 
     def check_ticket(self):
-        a,b = self.get_station()
+        a,b = self.get_station_name()
         if a=='' or b=='':
             tkinter.messagebox.showinfo('提示','不能为空!!!')
             return
@@ -248,7 +248,6 @@ class Widget():
         self.get_train_times()
 
     def auto_check_ticket(self):
-
         for i in range(10):
             self.t=threading.Thread(target=self.check_thread)
             #print('current thread is %d' % i)
@@ -258,7 +257,7 @@ class Widget():
 
     def check_thread(self):
         self.mutex.acquire(10)
-        a,b = self.get_station()
+        a,b = self.get_station_name()
         if a=='' or b=='':
             a='武汉'
             b='合肥'
