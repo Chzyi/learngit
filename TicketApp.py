@@ -7,9 +7,12 @@ import time
 import json
 import threading
 class Widget():
+    
     def __init__(self):
 
-    	#初始化窗口
+
+
+        #初始化窗口
         self.root = Tk()
         self.root.title('12306火车票查询系统')
         self.root.resizable(False,False)
@@ -147,7 +150,7 @@ class Widget():
         self.start_string.set(temp2)
         self.end_string.set(temp1)
 
-       	#获取当天可乘车次总数
+           #获取当天可乘车次总数
     def get_train_times(self):
          num = len(self.treeview.get_children())
          self.display['text']=str(num)+' 班列车'
@@ -197,26 +200,34 @@ class Widget():
         date = self.get_date()
         s_code ,e_code = self.get_station_code()
         url =url = 'https://kyfw.12306.cn/otn/leftTicket/queryZ?leftTicketDTO.train_date='+date+'&leftTicketDTO.from_station='+s_code+'&leftTicketDTO.to_station='+e_code+'&purpose_codes=ADULT'
-        get_header = {"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0"}
-        return url,get_header   #返回正确的url和请求header
+        get_header = {
+        "Accept":"*/*",
+        "Referer":"https://kyfw.12306.cn/otn/leftTicket/init",
+        "User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0"}        
+        return url,get_header   #返回正确的url
 
         # 对目标url发起requests请求链接
     def get_info(self):
-        url, header = self.fix_url()
+        url,header = self.fix_url()
+        
         addr = []
         info = []
+
         try:
             response = requests.get(url,headers=header,timeout=5)
             #response.encoding = response.apparent_encoding
            
-            response = json.loads(response.text)
+            info_dict = response.json()
+            addr = info_dict['data']['map'] #站点名称与代码字典
+            info = info_dict['data']['result'] # 车次信息字典
+            response.close()
 
         except Exception as e:
+            response.close()
             print('timeout')
             print(e)
-        else:
-            addr = response['data']['map']
-            info = response['data']['result']
+ 
+        
         return addr,info   #返回站点名称及所有车次信息
 
         #将站点名称及车次信息存放入Treeview表格中，展示给用户
